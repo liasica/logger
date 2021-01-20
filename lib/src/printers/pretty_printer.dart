@@ -21,8 +21,8 @@ class PrettyPrinter extends LogPrinter {
   static const bottomLeftCorner = '└';
   static const middleCorner = '├';
   static const verticalLine = '│';
-  static const doubleDivider = '─';
-  static const singleDivider = '┄';
+  static const doubleDivider = "─";
+  static const singleDivider = "┄";
 
   static final levelColors = {
     Level.verbose: AnsiColor.fg(AnsiColor.grey(0.5)),
@@ -31,6 +31,15 @@ class PrettyPrinter extends LogPrinter {
     Level.warning: AnsiColor.fg(208),
     Level.error: AnsiColor.fg(196),
     Level.wtf: AnsiColor.fg(199),
+  };
+
+  static final levelPrefix = {
+    Level.verbose: AnsiColor.txt(""),
+    Level.debug: AnsiColor.txt(   "  DEBUG "),
+    Level.info: AnsiColor.txt(    "   INFO "),
+    Level.warning: AnsiColor.txt( "WARNING "),
+    Level.error: AnsiColor.txt(   "  ERROR "),
+    Level.wtf: AnsiColor.txt(     "  FATAL "),
   };
 
   static final levelEmojis = {
@@ -50,6 +59,7 @@ class PrettyPrinter extends LogPrinter {
   final int errorMethodCount;
   final int lineLength;
   final bool colors;
+  final bool prefix;
   final bool printEmojis;
   final bool printTime;
 
@@ -62,6 +72,7 @@ class PrettyPrinter extends LogPrinter {
     this.errorMethodCount = 8,
     this.lineLength = 120,
     this.colors = true,
+    this.prefix = false,
     this.printEmojis = true,
     this.printTime = false,
   }) {
@@ -69,14 +80,14 @@ class PrettyPrinter extends LogPrinter {
 
     var doubleDividerLine = StringBuffer();
     var singleDividerLine = StringBuffer();
-    for (var i = 0; i < lineLength - 1; i++) {
+    for (int i = 0; i < lineLength - 1; i++) {
       doubleDividerLine.write(doubleDivider);
       singleDividerLine.write(singleDivider);
     }
 
-    _topBorder = '$topLeftCorner$doubleDividerLine';
-    _middleBorder = '$middleCorner$singleDividerLine';
-    _bottomBorder = '$bottomLeftCorner$doubleDividerLine';
+    _topBorder = "$topLeftCorner$doubleDividerLine";
+    _middleBorder = "$middleCorner$singleDividerLine";
+    _bottomBorder = "$bottomLeftCorner$doubleDividerLine";
   }
 
   @override
@@ -109,7 +120,7 @@ class PrettyPrinter extends LogPrinter {
   }
 
   String formatStackTrace(StackTrace stackTrace, int methodCount) {
-    var lines = stackTrace.toString().split('\n');
+    var lines = stackTrace.toString().split("\n");
 
     var formatted = <String>[];
     var count = 0;
@@ -119,7 +130,7 @@ class PrettyPrinter extends LogPrinter {
         if (match.group(2).startsWith('package:logger')) {
           continue;
         }
-        var newLine = '#$count   ${match.group(1)} (${match.group(2)})';
+        var newLine = "#$count   ${match.group(1)} (${match.group(2)})";
         formatted.add(newLine.replaceAll('<anonymous closure>', '()'));
         if (++count == methodCount) {
           break;
@@ -138,23 +149,23 @@ class PrettyPrinter extends LogPrinter {
 
   String getTime() {
     String _threeDigits(int n) {
-      if (n >= 100) return '$n';
-      if (n >= 10) return '0$n';
-      return '00$n';
+      if (n >= 100) return "$n";
+      if (n >= 10) return "0$n";
+      return "00$n";
     }
 
     String _twoDigits(int n) {
-      if (n >= 10) return '$n';
-      return '0$n';
+      if (n >= 10) return "$n";
+      return "0$n";
     }
 
     var now = DateTime.now();
-    var h = _twoDigits(now.hour);
-    var min = _twoDigits(now.minute);
-    var sec = _twoDigits(now.second);
-    var ms = _threeDigits(now.millisecond);
+    String h = _twoDigits(now.hour);
+    String min = _twoDigits(now.minute);
+    String sec = _twoDigits(now.second);
+    String ms = _threeDigits(now.millisecond);
     var timeSinceStart = now.difference(_startTime).toString();
-    return '$h:$min:$sec.$ms (+$timeSinceStart)';
+    return "$h:$min:$sec.$ms (+$timeSinceStart)";
   }
 
   String stringifyMessage(dynamic message) {
@@ -170,7 +181,11 @@ class PrettyPrinter extends LogPrinter {
     if (colors) {
       return levelColors[level];
     } else {
-      return AnsiColor.none();
+      if (prefix) {
+        return levelPrefix[level];
+      } else {
+        return AnsiColor.none();
+      }
     }
   }
 
@@ -182,7 +197,11 @@ class PrettyPrinter extends LogPrinter {
         return levelColors[Level.error].toBg();
       }
     } else {
-      return AnsiColor.none();
+      if (prefix) {
+        return levelPrefix[level];
+      } else {
+        return AnsiColor.none();
+      }
     }
   }
 
@@ -190,7 +209,7 @@ class PrettyPrinter extends LogPrinter {
     if (printEmojis) {
       return levelEmojis[level];
     } else {
-      return '';
+      return "";
     }
   }
 
@@ -201,8 +220,6 @@ class PrettyPrinter extends LogPrinter {
     String error,
     String stacktrace,
   ) {
-    // This code is non trivial and a type annotation here helps understanding.
-    // ignore: omit_local_variable_types
     List<String> buffer = [];
     var color = _getLevelColor(level);
     buffer.add(color(_topBorder));
